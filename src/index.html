@@ -1,0 +1,56 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>
+            Lyre Tab Editor
+        </title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    
+    <body>
+        <div id="content">
+            <div><h1>Lyre Tab Editor</h1></div>
+            <div>
+                BPM:
+                <input type="number" id="bpm" value="100">
+            </div>
+            <div>
+                Track Length:
+                <input type="number" id="trackLength" value="32">
+                <button id="remakeTrack">Remake Track</button>
+            </div>
+            <div>
+                <button id="saveTrack">Save Track</button>
+            </div>
+            <div class="bigSpace"></div>
+            <div id="lyre-instrument" class="lyre-instrument">
+                <button class="lyre-button" value="G3">G</button>
+                <button class="lyre-button" value="A3">A</button>
+                <button class="lyre-button" value="B3">B</button>
+                <button class="lyre-button" value="C4">C</button>
+                <button class="lyre-button" value="D4">D</button>
+                <button class="lyre-button" value="E4">E</button>
+                <button class="lyre-button" value="F4">F</button>
+                <button class="lyre-button" value="G4">G</button>
+                <button class="lyre-button" value="A4">A</button>
+                <button class="lyre-button" value="B4">B</button>
+                <button class="lyre-button" value="C5">C</button>
+                <button class="lyre-button" value="D5">D</button>
+                <button class="lyre-button" value="E5">E</button>
+                <button class="lyre-button" value="F5">F</button>
+                <button class="lyre-button" value="G5">G</button>
+                <button class="lyre-button" value="A5">A</button>
+            </div>
+            <div class="bigSpace"></div>
+            <div id="noteTrack" class="noteTrack">
+                <!--<div class="noteTrack-slot"></div>-->
+            </div>
+            <button id="startPlaying">Start</button>
+            <button id="stopPlaying">Stop</button>
+        </div>
+
+
+        <script src="../lib/Tone.js"></script>
+        <script type="module" src="lyreTab.js"></script>  
+    </body>
+</html>

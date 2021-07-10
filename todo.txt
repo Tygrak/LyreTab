@@ -1,0 +1,8 @@
+-add line splitting in tabs
+-add loading of tabs
+-make status bar at bottom of screen, showing for example if the user presses C that they should press a number next and so on
+-add buttons for other actions like creating chords
+-add ordering of notes when creating tab string
+
+-midi support, saving to midi
+-loading from midi, automatically detecting possible tuning or transposition to make a song work

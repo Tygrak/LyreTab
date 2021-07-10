@@ -1,0 +1,56 @@
+body {
+    background-color: darkmagenta;
+}
+
+#content {
+    margin: auto;
+    width: 90%;
+    padding: 10px;
+}
+
+.lyre-instrument {
+    margin-top: 1em;
+    display: flex;
+}
+
+.lyre-button {
+    margin: 0px;
+    padding: 0px;
+}
+
+.bigSpace {
+    padding: 1em;
+}
+
+.noteTrack {
+    background-color: cornsilk;
+    width: 100%;
+    display: flex;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    margin-bottom: 1em;
+}
+
+.noteTrack-slot {
+    display: flex;
+    flex-direction: column;
+    margin: 0px;
+    padding: 0px;
+    min-width: 2em;
+    height: 12em;
+    border: 1px solid black;
+    text-align: center;
+}
+
+.noteTrack-selected {
+    background-color: yellow;
+}
+
+.noteTrack-playing {
+    background-color: red;
+}
+
+.noteTrack-label {
+    background-color: black;
+    color: white;
+}
