@@ -6,3 +6,5 @@
 
 -midi support, saving to midi
 -loading from midi, automatically detecting possible tuning or transposition to make a song work
+
+-support for other tunings and string amounts

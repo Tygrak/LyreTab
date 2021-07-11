@@ -1,31 +1,77 @@
-function createTabString(bpm, noteTrack, width=30) {
+function createTabString(bpm, noteTrack, width=24) {
     let resultString = "";
     resultString += "bpm:" + bpm + "\n";
-    let maxHeight = 0;
-    for (let i = 0; i < noteTrack.length; i++) {
-        if (noteTrack[i].length > maxHeight) {
-            maxHeight = noteTrack[i].length;
-        }
-    }
-    for (let line = 0; line < maxHeight; line++) {
+    let split = splitArrayIntoChunks(noteTrack, width);
+    for (let chunkI = 0; chunkI < split.length; chunkI++) {
+        let maxHeight = 0;
         for (let i = 0; i < noteTrack.length; i++) {
-            if (noteTrack[i].length <= line) {
-                resultString += "  ";
-            } else {
-                resultString += noteTrack[i][line];
+            if (noteTrack[i].length > maxHeight) {
+                maxHeight = noteTrack[i].length;
             }
-            resultString += "|";
         }
-        resultString += "\n";
+        let chunk = split[chunkI];
+        for (let line = 0; line < maxHeight; line++) {
+            for (let i = 0; i < chunk.length; i++) {
+                if (chunk[i].length <= line) {
+                    resultString += "  ";
+                } else {
+                    resultString += chunk[i][line];
+                }
+                resultString += "|";
+            }
+            resultString += "\n";
+        }
+        resultString += "\n\n";
     }
     return resultString;
 }
 
-function loadTabString(string) {
-    let lines = string.split("\n");
+function loadFile(file, callback) {
+    if (file == null) {
+        throw "No data file provided.";
+    }
+    let reader = new FileReader();
+    reader.onload = function (textResult) {
+        callback(textResult.target.result);
+    }
+    reader.onerror = function (e) {
+        throw "Loading the data file failed, most likely because of how big the file is.";
+    }
+    reader.readAsText(file, "UTF-8");
+}
+
+function loadTabString(tabString) {
+    let lines = tabString.split("\n");
     let match = lines[0].match(/bpm: *(\d+)/);
     let noteTrack = [];
-    return {bpm: match.groups[1], noteTrack: noteTrack};
+    let currentPos = 0;
+    for (let line = 1; line < lines.length; line++) {
+        if (lines[line] == "") {
+            continue;
+        }
+        let height = 0;
+        for (let i = line; i < lines.length; i++) {
+            if (lines[i] == "") {
+                break;
+            }
+            height++;
+            let split = lines[i].split("|");
+            for (let j = 0; j < split.length; j++) {
+                if (split[j] == "") {
+                    continue;
+                }
+                if (j+currentPos >= noteTrack.length) {
+                    noteTrack.push([]);
+                }
+                if (split[j] != "  ") {
+                    noteTrack[j+currentPos].push(split[j]);
+                }
+            }
+        }
+        currentPos = noteTrack.length;
+        line += height;
+    }
+    return {bpm: match[1], noteTrack: noteTrack};
 }
 
 function createDownload(data, filename) {
@@ -46,4 +92,23 @@ function createDownload(data, filename) {
     }
 }
 
-export {createTabString, loadTabString, createDownload};
+function splitArrayIntoChunks(array, chunkSize) {
+    let result = [];
+    let current = [];
+    let n = 0;
+    for (let i = 0; i < array.length; i++) {
+        current.push(array[i]);
+        n++;
+        if (n >= chunkSize) {
+            result.push(current);
+            current = [];
+            n = 0;
+        }
+    }
+    if (n > 0) {
+        result.push(current);
+    }
+    return result;
+}
+
+export {createTabString, loadTabString, createDownload, loadFile};
