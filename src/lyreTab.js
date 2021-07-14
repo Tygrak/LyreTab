@@ -17,6 +17,8 @@ const loadTrackButton = document.getElementById("loadTrack");
 const midiFileInput = document.getElementById("midiFileInput");
 const loadMidiButton = document.getElementById("loadMidi");
 const midiTrackToLoadInput = document.getElementById("midiTrackToLoad");
+const midiTryMatchTimeCheckbox = document.getElementById("midiTryMatchTime");
+const detectedMidiTracksElement = document.getElementById("detectedMidiTracks");
 
 changeTrackLengthButton.onclick = resizeNoteTrack;
 remakeTrackButton.onclick = makeNoteTrack;
@@ -43,7 +45,31 @@ loadMidiButton.onclick = () => {
     }
     MidiReader.loadMidiFile(midiFileInput.files[0], (midi) => {
         let trackToLoad = parseInt(midiTrackToLoadInput.value);
-        let result = MidiReader.createTabFromMidi(midi, trackToLoad);
+        console.log("Reading midi: " + midi.tracks[trackToLoad].name);
+        let result = MidiReader.createTabFromMidi(midi, trackToLoad, allowedNotes, midiTryMatchTimeCheckbox.checked);
+        console.log(result);
+        bpmInput.value = result.bpm;
+        bpm = result.bpm;
+        noteTrack = result.noteTrack;
+        trackLengthInput.value = result.noteTrack.length;
+        resizeNoteTrack();
+        for (let i = 0; i < result.noteTrackLengths.length; i++) {
+            setNoteLengthTo(i, result.noteTrackLengths[i]);
+        }
+        let resultText = "Found tracks: ";
+        for (let i = 0; i < midi.tracks.length; i++) {
+            if (midi.tracks[i].notes.length == 0) {
+                continue;
+            }
+            resultText += i + ": " + midi.tracks[i].name + ", ";
+        }
+        if (result.missingNotes.length == 0) {
+            resultText += "Matched perfectly.";
+        } else {
+            resultText += "Missing notes: " + [...new Set(result.missingNotes)];
+        }
+        detectedMidiTracksElement.innerText = resultText;
+        console.log(MidiReader.findUnusedNotes(noteTrack, allowedNotes));
     });
 };
 
@@ -203,9 +229,9 @@ function startPlayingAt(location) {
     Tone.Transport.cancel();
     Tone.Transport.stop();
     console.log("start");
-    bpm = parseInt(bpmInput.value);
+    bpm = parseFloat(bpmInput.value);
     Tone.Transport.bpm.value = bpm;
-    let sixteenthNoteTime = 0;
+    let time = 0;
     for (let i = location; i < noteTrack.length; i++) {
         Tone.Transport.schedule(function(time){
             currentNote = i;
@@ -217,47 +243,11 @@ function startPlayingAt(location) {
             for (let i = 0; i < noteTrack[currentNote].length; i++) {
                 synth.triggerAttackRelease(noteTrack[currentNote][i], noteTrackLengths[currentNote], time);
             }
-        }, "0:0:"+sixteenthNoteTime);
-        if (noteTrackLengths[i] == "16n") {
-            sixteenthNoteTime += 1;
-        } else if (noteTrackLengths[i] == "8n") {
-            sixteenthNoteTime += 2;
-        } else if (noteTrackLengths[i] == "4n") {
-            sixteenthNoteTime += 4;
-        } else if (noteTrackLengths[i] == "2n") {
-            sixteenthNoteTime += 8;
-        } else if (noteTrackLengths[i] == "1n") {
-            sixteenthNoteTime += 16;
-        }
+        }, time);
+        time += Tone.Time(noteTrackLengths[i]).toSeconds();
     }
     Tone.Transport.start();
 }
-/*
-function startPlayingAt(location) {
-    if (lastPlayingNoteTrackSlot != null) {
-        lastPlayingNoteTrackSlot.classList.remove("noteTrack-playing");
-        lastPlayingNoteTrackSlot = null;
-    }
-    currentNote = location;
-    Tone.Transport.cancel();
-    Tone.Transport.stop();
-    console.log("start");
-    bpm = parseInt(bpmInput.value);
-    Tone.Transport.bpm.value = bpm;
-    Tone.Transport.scheduleRepeat(function(time){
-        if (lastPlayingNoteTrackSlot != null) {
-            lastPlayingNoteTrackSlot.classList.remove("noteTrack-playing");
-        }
-        noteTrackSlots[currentNote].classList.add("noteTrack-playing");
-        for (let i = 0; i < noteTrack[currentNote].length; i++) {
-            synth.triggerAttackRelease(noteTrack[currentNote][i], noteTrackLengths[currentNote], time);
-        }
-        lastPlayingNoteTrackSlot = noteTrackSlots[currentNote];
-        currentNote++;
-        currentNote = currentNote >= noteTrack.length ? 0 : currentNote;
-    }, "8n");
-    Tone.Transport.start();
-}*/
 
 function stopPlaying() {
     console.log("stop");
@@ -297,10 +287,13 @@ function setNoteLengthTo(location, length) {
         element.classList.remove("noteTrack-8th");
     } else if (noteTrackLengths[location] == "4n") {
         element.classList.remove("noteTrack-4th");
+    } else if (noteTrackLengths[location] == "3n") {
+        element.classList.remove("noteTrack-3th");
     } else if (noteTrackLengths[location] == "2n") {
         element.classList.remove("noteTrack-2th");
     } else if (noteTrackLengths[location] == "1n") {
         element.classList.remove("noteTrack-1th");
+    } else { 
     }
     if (length == "16n") {
         element.classList.add("noteTrack-16th");
@@ -308,6 +301,8 @@ function setNoteLengthTo(location, length) {
         element.classList.add("noteTrack-8th");
     } else if (length == "4n") {
         element.classList.add("noteTrack-4th");
+    } else if (length == "3n") {
+        element.classList.add("noteTrack-3th");
     } else if (length == "2n") {
         element.classList.add("noteTrack-2th");
     } else if (length == "1n") {

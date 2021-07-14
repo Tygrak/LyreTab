@@ -2,7 +2,10 @@
 -add buttons for other actions like creating chords
 -add ordering of notes when creating tab string
 
--midi support, saving to midi
--loading from midi, automatically detecting possible tuning or transposition to make a song work
+midi
+-automatically detecting possible tuning or transposition to make a song work
+-allow converting songs in minor to major
+-better support for other time signatures than 4/4
 
+-create settings screen
 -support for other tunings and string amounts

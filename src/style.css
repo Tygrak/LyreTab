@@ -58,6 +58,10 @@ body {
     min-width: 4rem;
 }
 
+.noteTrack-3th {
+    min-width: 3rem;
+}
+
 .noteTrack-2th {
     min-width: 8rem;
 }
