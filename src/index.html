@@ -25,6 +25,13 @@
                 <button id="loadTrack">Load Track</button>
                 <button id="saveTrack">Save Track</button>
             </div>
+            <div>
+                <input type="file" id="midiFileInput" name="midiFileInput" accept=".mid,.midi">
+                <button id="loadMidi">Load Midi</button>
+                Midi Track:
+                <input type="number" id="midiTrackToLoad" value="0" style="width: 4em;">
+                <div id="detectedMidiTracks"></div>
+            </div>
             <div class="bigSpace"></div>
             <div id="lyre-instrument" class="lyre-instrument">
                 <button class="lyre-button" value="G3">G</button>
@@ -52,7 +59,7 @@
             <button id="stopPlaying">Stop</button>
         </div>
 
-
+        <script src="../lib/Midi.js"></script>
         <script src="../lib/Tone.js"></script>
         <script type="module" src="lyreTab.js"></script>  
     </body>

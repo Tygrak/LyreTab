@@ -4,7 +4,7 @@ body {
 
 #content {
     margin: auto;
-    width: 90%;
+    width: 98%;
     padding: 10px;
 }
 
@@ -40,10 +40,30 @@ body {
     flex-direction: column;
     margin: 0px;
     padding: 0px;
-    min-width: 2em;
-    height: 12em;
+    min-height: 12rem;
     border: 1px solid black;
     text-align: center;
+}
+
+.noteTrack-16th {
+    min-width: 1rem;
+    font-size: smaller;
+}
+
+.noteTrack-8th {
+    min-width: 2rem;
+}
+
+.noteTrack-4th {
+    min-width: 4rem;
+}
+
+.noteTrack-2th {
+    min-width: 8rem;
+}
+
+.noteTrack-1th {
+    min-width: 16rem;
 }
 
 .noteTrack-selected {
@@ -57,4 +77,5 @@ body {
 .noteTrack-label {
     background-color: black;
     color: white;
+    font-size: medium;
 }

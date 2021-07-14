@@ -1,4 +1,5 @@
 import * as TabCreator from './lyreTabFormat.js';
+import * as MidiReader from './midiReader.js';
 
 let bpm = 100;
 
@@ -13,6 +14,9 @@ const remakeTrackButton = document.getElementById("remakeTrack");
 const saveTrackButton = document.getElementById("saveTrack");
 const trackFileInput = document.getElementById("trackFileInput");
 const loadTrackButton = document.getElementById("loadTrack");
+const midiFileInput = document.getElementById("midiFileInput");
+const loadMidiButton = document.getElementById("loadMidi");
+const midiTrackToLoadInput = document.getElementById("midiTrackToLoad");
 
 changeTrackLengthButton.onclick = resizeNoteTrack;
 remakeTrackButton.onclick = makeNoteTrack;
@@ -33,6 +37,15 @@ loadTrackButton.onclick = () => {
         resizeNoteTrack();
     });
 };
+loadMidiButton.onclick = () => {
+    if (midiFileInput.files.length == 0) {
+        return;
+    }
+    MidiReader.loadMidiFile(midiFileInput.files[0], (midi) => {
+        let trackToLoad = parseInt(midiTrackToLoadInput.value);
+        let result = MidiReader.createTabFromMidi(midi, trackToLoad);
+    });
+};
 
 document.onkeydown = keyPressed;
 
@@ -45,8 +58,10 @@ let allowedNotes = ["G3","A3","B3","C4","D4","E4","F4","G4","A4","B4","C5","D5",
 
 let noteTrack = [];
 let noteTrackSlots = [];
+let noteTrackLengths = [];
 let selected = [];
 let copied = [];
+let copiedLengths = [];
 let currentNote = 0;
 let lastPlayingNoteTrackSlot = null;
 let composedNote = "";
@@ -85,6 +100,7 @@ function resizeNoteTrack() {
     let newTrackLength = parseInt(trackLengthInput.value);
     while (noteTrack.length < newTrackLength) {
         noteTrack.push([]);
+        noteTrackLengths.push("8n");
     }
     noteTrack.length = newTrackLength;
     noteTrackSlots = [];
@@ -92,6 +108,7 @@ function resizeNoteTrack() {
     for (let i = 0; i < noteTrack.length; i++) {
         let element = document.createElement("span");
         element.classList.add("noteTrack-slot");
+        element.classList.add("noteTrack-8th");
         let label = document.createElement("span");
         label.classList.add("noteTrack-label");
         label.innerText = i+1;
@@ -117,6 +134,7 @@ function makeNoteTrack() {
     for (let i = 0; i < trackLength; i++) {
         let element = document.createElement("span");
         element.classList.add("noteTrack-slot");
+        element.classList.add("noteTrack-8th");
         let label = document.createElement("span");
         label.classList.add("noteTrack-label");
         label.innerText = i+1;
@@ -131,6 +149,7 @@ function makeNoteTrack() {
         noteTrackElement.appendChild(element);
         noteTrackSlots.push(element);
         noteTrack.push([]);
+        noteTrackLengths.push("8n");
     }
 }
 
@@ -172,11 +191,54 @@ function hookupLyreButtons() {
 }
 
 function startPlaying() {
+    startPlayingAt(0);
+}
+
+function startPlayingAt(location) {
     if (lastPlayingNoteTrackSlot != null) {
         lastPlayingNoteTrackSlot.classList.remove("noteTrack-playing");
         lastPlayingNoteTrackSlot = null;
     }
-    currentNote = 0;
+    currentNote = location;
+    Tone.Transport.cancel();
+    Tone.Transport.stop();
+    console.log("start");
+    bpm = parseInt(bpmInput.value);
+    Tone.Transport.bpm.value = bpm;
+    let sixteenthNoteTime = 0;
+    for (let i = location; i < noteTrack.length; i++) {
+        Tone.Transport.schedule(function(time){
+            currentNote = i;
+            if (lastPlayingNoteTrackSlot != null) {
+                lastPlayingNoteTrackSlot.classList.remove("noteTrack-playing");
+            }
+            noteTrackSlots[currentNote].classList.add("noteTrack-playing");
+            lastPlayingNoteTrackSlot = noteTrackSlots[currentNote];
+            for (let i = 0; i < noteTrack[currentNote].length; i++) {
+                synth.triggerAttackRelease(noteTrack[currentNote][i], noteTrackLengths[currentNote], time);
+            }
+        }, "0:0:"+sixteenthNoteTime);
+        if (noteTrackLengths[i] == "16n") {
+            sixteenthNoteTime += 1;
+        } else if (noteTrackLengths[i] == "8n") {
+            sixteenthNoteTime += 2;
+        } else if (noteTrackLengths[i] == "4n") {
+            sixteenthNoteTime += 4;
+        } else if (noteTrackLengths[i] == "2n") {
+            sixteenthNoteTime += 8;
+        } else if (noteTrackLengths[i] == "1n") {
+            sixteenthNoteTime += 16;
+        }
+    }
+    Tone.Transport.start();
+}
+/*
+function startPlayingAt(location) {
+    if (lastPlayingNoteTrackSlot != null) {
+        lastPlayingNoteTrackSlot.classList.remove("noteTrack-playing");
+        lastPlayingNoteTrackSlot = null;
+    }
+    currentNote = location;
     Tone.Transport.cancel();
     Tone.Transport.stop();
     console.log("start");
@@ -188,14 +250,14 @@ function startPlaying() {
         }
         noteTrackSlots[currentNote].classList.add("noteTrack-playing");
         for (let i = 0; i < noteTrack[currentNote].length; i++) {
-            synth.triggerAttackRelease(noteTrack[currentNote][i], "8n", time);
+            synth.triggerAttackRelease(noteTrack[currentNote][i], noteTrackLengths[currentNote], time);
         }
         lastPlayingNoteTrackSlot = noteTrackSlots[currentNote];
         currentNote++;
         currentNote = currentNote >= noteTrack.length ? 0 : currentNote;
     }, "8n");
     Tone.Transport.start();
-}
+}*/
 
 function stopPlaying() {
     console.log("stop");
@@ -224,11 +286,41 @@ function addNoteAt(note, location) {
     }
 }
 
+function setNoteLengthTo(location, length) {
+    if (location < 0 || location > noteTrack.length) {
+        return;
+    }
+    let element = noteTrackSlots[location];
+    if (noteTrackLengths[location] == "16n") {
+        element.classList.remove("noteTrack-16th");
+    } else if (noteTrackLengths[location] == "8n") {
+        element.classList.remove("noteTrack-8th");
+    } else if (noteTrackLengths[location] == "4n") {
+        element.classList.remove("noteTrack-4th");
+    } else if (noteTrackLengths[location] == "2n") {
+        element.classList.remove("noteTrack-2th");
+    } else if (noteTrackLengths[location] == "1n") {
+        element.classList.remove("noteTrack-1th");
+    }
+    if (length == "16n") {
+        element.classList.add("noteTrack-16th");
+    } else if (length == "8n") {
+        element.classList.add("noteTrack-8th");
+    } else if (length == "4n") {
+        element.classList.add("noteTrack-4th");
+    } else if (length == "2n") {
+        element.classList.add("noteTrack-2th");
+    } else if (length == "1n") {
+        element.classList.add("noteTrack-1th");
+    }
+    noteTrackLengths[location] = length;
+}
+
 function keyPressed(event) {
     console.log(event);
     if (event.key == "ArrowLeft") {
         if (event.shiftKey) {
-            if (selected.length > 0 && selected[0]-1 > 0) {
+            if (selected.length > 0 && selected[0]-1 >= 0) {
                 selected.splice(0, 0, selected[0]-1);
                 noteTrackSlots[selected[0]].classList.add("noteTrack-selected");
             }
@@ -248,7 +340,7 @@ function keyPressed(event) {
         addingNote = false;
     } else if (event.key == "ArrowRight") {
         if (event.shiftKey) {
-            if (selected.length > 0 && selected[selected.length-1]+1 <= noteTrack.length) {
+            if (selected.length > 0 && selected[selected.length-1]+1 < noteTrack.length) {
                 selected.push(selected[selected.length-1]+1);
                 noteTrackSlots[selected[selected.length-1]].classList.add("noteTrack-selected");
             }
@@ -266,6 +358,26 @@ function keyPressed(event) {
             }
         }
         addingNote = false;
+    } else if (event.key.toUpperCase() == "Q") {
+        for (let i = 0; i < selected.length; i++) {
+            setNoteLengthTo(selected[i], "16n");
+        }
+    } else if (event.key.toUpperCase() == "W") {
+        for (let i = 0; i < selected.length; i++) {
+            setNoteLengthTo(selected[i], "8n");
+        }
+    } else if (event.key.toUpperCase() == "E") {
+        for (let i = 0; i < selected.length; i++) {
+            setNoteLengthTo(selected[i], "4n");
+        }
+    } else if (event.key.toUpperCase() == "R") {
+        for (let i = 0; i < selected.length; i++) {
+            setNoteLengthTo(selected[i], "2n");
+        }
+    } else if (event.key.toUpperCase() == "T") {
+        for (let i = 0; i < selected.length; i++) {
+            setNoteLengthTo(selected[i], "1n");
+        }
     } else if (event.key.toUpperCase() == "O") {
         selected.reverse();
         for (let i = selected.length-1; i >= 0; i--) {
@@ -302,14 +414,16 @@ function keyPressed(event) {
         }
         updateUITrackNotes();
         addingNote = false;
-    } else if (event.key == "x" || event.key == "Backspace") {
+    } else if (event.key == "x" || event.key == "Backspace" || event.key == "Delete") {
         for (let i = 0; i < selected.length; i++) {
             addNoteAt("x", selected[i]);
         }
     } else if (event.key == "c" && event.ctrlKey) {
         copied = [];
+        copiedLengths = [];
         for (let i = 0; i < selected.length; i++) {
             copied.push(noteTrack[selected[i]]);
+            copiedLengths.push(noteTrackLengths[selected[i]]);
         }
     } else if (event.key == "v" && event.ctrlKey) {
         let trackPos = selected[0];
@@ -318,6 +432,7 @@ function keyPressed(event) {
                 break;
             }
             noteTrack[trackPos] = copied[i];
+            setNoteLengthTo(trackPos, copiedLengths[i]);
             trackPos++;
         }
         updateUITrackNotes();
@@ -325,7 +440,11 @@ function keyPressed(event) {
         if (Tone.Transport.state == "started") {
             stopPlaying();
         } else {
-            startPlaying();
+            if (event.shiftKey) {
+                startPlaying();
+            } else {
+                startPlayingAt(selected[0]);
+            }
         }
     } else if (allowedNoteKeys.indexOf(event.key.toUpperCase()) != -1) {
         composedNote = event.key.toUpperCase();
