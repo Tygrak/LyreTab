@@ -53,16 +53,14 @@ loadMidiButton.onclick = () => {
         noteTrack = result.noteTrack;
         trackLengthInput.value = result.noteTrack.length;
         resizeNoteTrack();
-        for (let i = 0; i < result.noteTrackLengths.length; i++) {
-            setNoteLengthTo(i, result.noteTrackLengths[i]);
-        }
         let resultText = "Found tracks: ";
         for (let i = 0; i < midi.tracks.length; i++) {
             if (midi.tracks[i].notes.length == 0) {
                 continue;
             }
-            resultText += i + ": " + midi.tracks[i].name + ", ";
+            resultText += i + ": " + midi.tracks[i].instrument.name + ", ";
         }
+        resultText += "Transposed by " + result.transposedBy + ".";
         if (result.missingNotes.length == 0) {
             resultText += "Matched perfectly.";
         } else {
@@ -70,6 +68,10 @@ loadMidiButton.onclick = () => {
         }
         detectedMidiTracksElement.innerText = resultText;
         console.log(MidiReader.findUnusedNotes(noteTrack, allowedNotes));
+        noteTrackLengths = result.noteTrackLengths;
+        for (let i = 0; i < result.noteTrackLengths.length; i++) {
+            setNoteLengthTo(i, result.noteTrackLengths[i]);
+        }
     });
 };
 
@@ -294,6 +296,7 @@ function setNoteLengthTo(location, length) {
     } else if (noteTrackLengths[location] == "1n") {
         element.classList.remove("noteTrack-1th");
     } else { 
+        element.style.minWidth = "";
     }
     if (length == "16n") {
         element.classList.add("noteTrack-16th");
@@ -307,6 +310,8 @@ function setNoteLengthTo(location, length) {
         element.classList.add("noteTrack-2th");
     } else if (length == "1n") {
         element.classList.add("noteTrack-1th");
+    } else {
+        element.style.minWidth = (noteTrackLengths[location]*(60/bpm)*8) + "rem";
     }
     noteTrackLengths[location] = length;
 }
@@ -353,23 +358,23 @@ function keyPressed(event) {
             }
         }
         addingNote = false;
-    } else if (event.key.toUpperCase() == "Q") {
+    } else if (event.key.toUpperCase() == "H") {
         for (let i = 0; i < selected.length; i++) {
             setNoteLengthTo(selected[i], "16n");
         }
-    } else if (event.key.toUpperCase() == "W") {
+    } else if (event.key.toUpperCase() == "J") {
         for (let i = 0; i < selected.length; i++) {
             setNoteLengthTo(selected[i], "8n");
         }
-    } else if (event.key.toUpperCase() == "E") {
+    } else if (event.key.toUpperCase() == "K") {
         for (let i = 0; i < selected.length; i++) {
             setNoteLengthTo(selected[i], "4n");
         }
-    } else if (event.key.toUpperCase() == "R") {
+    } else if (event.key.toUpperCase() == "L") {
         for (let i = 0; i < selected.length; i++) {
             setNoteLengthTo(selected[i], "2n");
         }
-    } else if (event.key.toUpperCase() == "T") {
+    } else if (event.key.toUpperCase() == "M") {
         for (let i = 0; i < selected.length; i++) {
             setNoteLengthTo(selected[i], "1n");
         }
@@ -438,7 +443,11 @@ function keyPressed(event) {
             if (event.shiftKey) {
                 startPlaying();
             } else {
-                startPlayingAt(selected[0]);
+                if (selected.length == 0) {
+                    startPlaying();
+                } else {
+                    startPlayingAt(selected[0]);
+                }
             }
         }
     } else if (allowedNoteKeys.indexOf(event.key.toUpperCase()) != -1) {

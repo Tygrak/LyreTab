@@ -10,7 +10,7 @@ function createTabFromMidi(midi, trackNumber, availableNotes, tryMatchTime = tru
     let bestTranspostion = 0;
     let maxFit = 0;
     let availableNotesMidi = convertAvailableNotesToMidiNotes(availableNotes);
-    for (let transposition = -48; transposition < 36; transposition++) {
+    for (let transposition = -60; transposition < 60; transposition++) {
         let fit = calculateTranspositionNotesFit(notes, transposition, availableNotesMidi);
         if (fit > maxFit) {
             maxFit = fit;

@@ -2,6 +2,9 @@
 -add buttons for other actions like creating chords
 -add ordering of notes when creating tab string
 
+-add multiple tracks support
+-add musical notation/score
+
 midi
 -automatically detecting possible tuning or transposition to make a song work
 -allow converting songs in minor to major
