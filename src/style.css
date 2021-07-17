@@ -1,5 +1,7 @@
 body {
     background-color: darkmagenta;
+    padding: 0;
+    margin: 0;
 }
 
 #content {
@@ -70,6 +72,10 @@ body {
     min-width: 16rem;
 }
 
+.noteTrack-outOfRange {
+    background-color: rgb(139, 110, 219);
+}
+
 .noteTrack-selected {
     background-color: yellow;
 }
@@ -82,4 +88,22 @@ body {
     background-color: black;
     color: white;
     font-size: medium;
+}
+
+.status {
+    overflow: hidden;
+    background-color: rgb(228, 228, 228);
+    position: fixed;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 1.25em;
+    border-top: 2px solid black;
+}
+
+.status-center {
+    margin: 0;
+    padding: 3px;
+    text-align: center;
 }

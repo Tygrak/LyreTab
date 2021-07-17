@@ -18,7 +18,9 @@ const midiFileInput = document.getElementById("midiFileInput");
 const loadMidiButton = document.getElementById("loadMidi");
 const midiTrackToLoadInput = document.getElementById("midiTrackToLoad");
 const midiTryMatchTimeCheckbox = document.getElementById("midiTryMatchTime");
+const midiAddOutOfRangeCheckbox = document.getElementById("midiAddOutOfRange");
 const detectedMidiTracksElement = document.getElementById("detectedMidiTracks");
+const statusElement = document.getElementById("status-center");
 
 changeTrackLengthButton.onclick = resizeNoteTrack;
 remakeTrackButton.onclick = makeNoteTrack;
@@ -46,7 +48,7 @@ loadMidiButton.onclick = () => {
     MidiReader.loadMidiFile(midiFileInput.files[0], (midi) => {
         let trackToLoad = parseInt(midiTrackToLoadInput.value);
         console.log("Reading midi: " + midi.tracks[trackToLoad].name);
-        let result = MidiReader.createTabFromMidi(midi, trackToLoad, allowedNotes, midiTryMatchTimeCheckbox.checked);
+        let result = MidiReader.createTabFromMidi(midi, trackToLoad, allowedNotes, midiTryMatchTimeCheckbox.checked, midiAddOutOfRangeCheckbox.checked);
         console.log(result);
         bpmInput.value = result.bpm;
         bpm = result.bpm;
@@ -69,7 +71,12 @@ loadMidiButton.onclick = () => {
         detectedMidiTracksElement.innerText = resultText;
         console.log(MidiReader.findUnusedNotes(noteTrack, allowedNotes));
         noteTrackLengths = result.noteTrackLengths;
-        for (let i = 0; i < result.noteTrackLengths.length; i++) {
+        for (let i = 0; i < result.noteTrack.length; i++) {
+            for (let j = 0; j < noteTrack[i].length; j++) {
+                if (noteTrack[i][j] != "x" && allowedNotes.indexOf(noteTrack[i][j]) == -1) {
+                    noteTrackSlots[i].classList.add("noteTrack-outOfRange");
+                }
+            }
             setNoteLengthTo(i, result.noteTrackLengths[i]);
         }
     });
@@ -121,6 +128,7 @@ function updateUITrackNotes() {
             }
         }
         noteTrackSlots[i].childNodes[1].innerText = noteText;
+        noteTrackSlots[i].title = noteText;
     }
 }
 
@@ -273,6 +281,7 @@ function addNoteAt(note, location) {
         noteTrack[location].push(note);
         addingNote = false;
     } else {
+        noteTrackSlots[location].classList.remove("noteTrack-outOfRange");
         noteTrackSlots[location].childNodes[1].innerText = note;
         noteTrack[location] = [note];
     }
@@ -438,8 +447,10 @@ function keyPressed(event) {
         updateUITrackNotes();
     } else if (event.key == " ") {
         if (Tone.Transport.state == "started") {
+            statusElement.innerText = "Stopped";
             stopPlaying();
         } else {
+            statusElement.innerText = "Playing";
             if (event.shiftKey) {
                 startPlaying();
             } else {

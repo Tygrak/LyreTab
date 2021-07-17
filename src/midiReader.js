@@ -1,4 +1,4 @@
-function createTabFromMidi(midi, trackNumber, availableNotes, tryMatchTime = true) {
+function createTabFromMidi(midi, trackNumber, availableNotes, tryMatchTime = true, addOutOfRange = true) {
     let track = midi.tracks[trackNumber];
     let notes = track.notes;
     let timeSignature = midi.header.timeSignatures[0];
@@ -23,7 +23,9 @@ function createTabFromMidi(midi, trackNumber, availableNotes, tryMatchTime = tru
         let noteName = Tone.Frequency(notes[i].midi+bestTranspostion, "midi").toNote();
         if (availableNotesMidi.indexOf(notes[i].midi+bestTranspostion) == -1) {
             missingNotes.push(noteName);
-            continue;
+            if (!addOutOfRange) {
+                continue;
+            }
         }
         while (notes[i].time-(lastPosition+lastDuration) > 0.1) {
             let pauseLength = notes[i].time-lastPosition+lastDuration;
