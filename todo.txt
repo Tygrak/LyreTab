@@ -2,6 +2,7 @@
 -add buttons for other actions like creating chords
 -add ordering of notes when creating tab string
 
+-add custom transposition selection input
 -add multiple tracks support
 -add musical notation/score
 

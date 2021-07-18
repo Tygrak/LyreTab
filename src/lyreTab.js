@@ -19,6 +19,7 @@ const loadMidiButton = document.getElementById("loadMidi");
 const midiTrackToLoadInput = document.getElementById("midiTrackToLoad");
 const midiTryMatchTimeCheckbox = document.getElementById("midiTryMatchTime");
 const midiAddOutOfRangeCheckbox = document.getElementById("midiAddOutOfRange");
+const playOtherTracksCheckbox = document.getElementById("playOtherTracks");
 const detectedMidiTracksElement = document.getElementById("detectedMidiTracks");
 const statusElement = document.getElementById("status-center");
 
@@ -47,20 +48,30 @@ loadMidiButton.onclick = () => {
     }
     MidiReader.loadMidiFile(midiFileInput.files[0], (midi) => {
         let trackToLoad = parseInt(midiTrackToLoadInput.value);
+        if (trackToLoad > midi.tracks.length) {
+            detectedMidiTracksElement.innerText = "Track out of range. Midi has " + midi.tracks.length + " tracks.";
+            return;
+        }
         console.log("Reading midi: " + midi.tracks[trackToLoad].name);
-        let result = MidiReader.createTabFromMidi(midi, trackToLoad, allowedNotes, midiTryMatchTimeCheckbox.checked, midiAddOutOfRangeCheckbox.checked);
+        let transposition = MidiReader.findBestTransposition(midi, trackToLoad, allowedNotes);
+        let result = MidiReader.createTabFromMidi(midi, trackToLoad, allowedNotes, transposition, midiTryMatchTimeCheckbox.checked, midiAddOutOfRangeCheckbox.checked);
         console.log(result);
         bpmInput.value = result.bpm;
         bpm = result.bpm;
         noteTrack = result.noteTrack;
         trackLengthInput.value = result.noteTrack.length;
         resizeNoteTrack();
+        otherTracks = [];
         let resultText = "Found tracks: ";
         for (let i = 0; i < midi.tracks.length; i++) {
             if (midi.tracks[i].notes.length == 0) {
                 continue;
             }
             resultText += i + ": " + midi.tracks[i].instrument.name + ", ";
+            if (playOtherTracksCheckbox.checked && i != trackToLoad) {
+                let otherResult = MidiReader.createTabFromMidi(midi, i, allowedNotes, transposition, midiTryMatchTimeCheckbox.checked, midiAddOutOfRangeCheckbox.checked);
+                otherTracks.push({noteTrack: otherResult.noteTrack, noteTrackLengths: otherResult.noteTrackLengths});
+            }
         }
         resultText += "Transposed by " + result.transposedBy + ".";
         if (result.missingNotes.length == 0) {
@@ -94,6 +105,9 @@ let allowedNotes = ["G3","A3","B3","C4","D4","E4","F4","G4","A4","B4","C5","D5",
 let noteTrack = [];
 let noteTrackSlots = [];
 let noteTrackLengths = [];
+
+let otherTracks = [];
+
 let selected = [];
 let copied = [];
 let copiedLengths = [];
@@ -250,11 +264,26 @@ function startPlayingAt(location) {
             }
             noteTrackSlots[currentNote].classList.add("noteTrack-playing");
             lastPlayingNoteTrackSlot = noteTrackSlots[currentNote];
-            for (let i = 0; i < noteTrack[currentNote].length; i++) {
-                synth.triggerAttackRelease(noteTrack[currentNote][i], noteTrackLengths[currentNote], time);
+            for (let j = 0; j < noteTrack[currentNote].length; j++) {
+                synth.triggerAttackRelease(noteTrack[currentNote][j], noteTrackLengths[currentNote], time);
             }
         }, time);
         time += Tone.Time(noteTrackLengths[i]).toSeconds();
+    }
+    if (location == 0 && playOtherTracksCheckbox.checked) {
+        let time = 0;
+        for (let track = 0; track < otherTracks.length; track++) {
+            const notes = otherTracks[track].noteTrack;
+            const noteLengths = otherTracks[track].noteTrackLengths;
+            for (let i = 0; i < notes.length; i++) {
+                Tone.Transport.schedule(function(time){
+                    for (let j = 0; j < notes[i].length; j++) {
+                        synth.triggerAttackRelease(notes[i][j], noteLengths[i], time);
+                    }
+                }, time);
+                time += Tone.Time(noteLengths[i]).toSeconds();
+            }
+        }
     }
     Tone.Transport.start();
 }

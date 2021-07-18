@@ -1,14 +1,8 @@
-function createTabFromMidi(midi, trackNumber, availableNotes, tryMatchTime = true, addOutOfRange = true) {
+function findBestTransposition(midi, trackNumber, availableNotes) {
     let track = midi.tracks[trackNumber];
     let notes = track.notes;
-    let timeSignature = midi.header.timeSignatures[0];
-    let bpm = midi.header.tempos[0].bpm*(timeSignature.timeSignature[1]/timeSignature.timeSignature[0]);
-    let availableDurations = calculateNoteDurations(bpm);
-    let noteTrack = [];
-    let noteTrackLengths = [];
-    let missingNotes = [];
-    let bestTranspostion = 0;
     let maxFit = 0;
+    let bestTranspostion = 0;
     let availableNotesMidi = convertAvailableNotesToMidiNotes(availableNotes);
     for (let transposition = -60; transposition < 60; transposition++) {
         let fit = calculateTranspositionNotesFit(notes, transposition, availableNotesMidi);
@@ -17,11 +11,24 @@ function createTabFromMidi(midi, trackNumber, availableNotes, tryMatchTime = tru
             bestTranspostion = transposition;
         }
     }
+    return bestTranspostion;
+}
+
+function createTabFromMidi(midi, trackNumber, availableNotes, transposition, tryMatchTime = true, addOutOfRange = true) {
+    let track = midi.tracks[trackNumber];
+    let notes = track.notes;
+    let timeSignature = midi.header.timeSignatures[0];
+    let bpm = midi.header.tempos[0].bpm*(timeSignature.timeSignature[1]/timeSignature.timeSignature[0]);
+    let availableDurations = calculateNoteDurations(bpm);
+    let noteTrack = [];
+    let noteTrackLengths = [];
+    let missingNotes = [];
+    let availableNotesMidi = convertAvailableNotesToMidiNotes(availableNotes);
     let lastPosition = -1;
     let lastDuration = 1;
     for (let i = 0; i < notes.length; i++) {
-        let noteName = Tone.Frequency(notes[i].midi+bestTranspostion, "midi").toNote();
-        if (availableNotesMidi.indexOf(notes[i].midi+bestTranspostion) == -1) {
+        let noteName = Tone.Frequency(notes[i].midi+transposition, "midi").toNote();
+        if (availableNotesMidi.indexOf(notes[i].midi+transposition) == -1) {
             missingNotes.push(noteName);
             if (!addOutOfRange) {
                 continue;
@@ -48,14 +55,14 @@ function createTabFromMidi(midi, trackNumber, availableNotes, tryMatchTime = tru
             if (tryMatchTime) {
                 duration = findNoteDuration(notes[i].duration, availableDurations).note;
             } else {
-                duration = notes[i].duration;
+                duration = notes[i].duration > 0 ? notes[i].duration : 0.001;
             }
             noteTrackLengths.push(duration);
-            lastDuration = notes[i].duration;
+            lastDuration = duration;
         }
         lastPosition = notes[i].time;
     }
-    return {noteTrack: noteTrack, noteTrackLengths: noteTrackLengths, transposedBy: bestTranspostion, missingNotes: missingNotes, bpm: bpm};
+    return {noteTrack: noteTrack, noteTrackLengths: noteTrackLengths, transposedBy: transposition, missingNotes: missingNotes, bpm: bpm};
 }
 
 function findNoteDuration(duration, availableDurations) {
@@ -122,4 +129,4 @@ function loadMidiFile(file, callback) {
     });
 }
 
-export {createTabFromMidi, findUnusedNotes, loadMidiFile};
+export {findBestTransposition, createTabFromMidi, findUnusedNotes, loadMidiFile};
