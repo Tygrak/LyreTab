@@ -1,0 +1,34 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>
+            Lyre Music Notation Learner
+        </title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    
+    <body>
+        <div id="content">
+            <div><h1>Lyre Music Notation Learner</h1></div>
+            <div>
+                BPM:
+                <input type="number" id="bpm" value="100" step="any">
+            </div>
+            <div id="notation-container"></div>
+            <div id="revealText"></div>
+            <button id="reveal">Reveal</button>
+            <button id="startPlaying">Start</button>
+            <button id="stopPlaying">Stop</button>
+        </div>
+        <div class="status">
+            <div id="status-center" class="status-center">
+                
+            </div>
+        </div>
+
+        <script src="../lib/Midi.js"></script>
+        <script src="../lib/Tone.js"></script>
+        <script src="../lib/vexflow-min.js"></script>
+        <script type="module" src="notationLearner.js"></script>  
+    </body>
+</html>

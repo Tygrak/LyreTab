@@ -107,3 +107,18 @@ body {
     padding: 3px;
     text-align: center;
 }
+
+#revealText {
+    width: 500px;
+    background-color: rgb(183, 219, 136);
+    padding: 2px;
+    margin: 1.5em;
+    border: solid 2px black;
+}
+
+#notation-container {
+    background-color: rgb(183, 219, 136);
+    padding: 2px;
+    margin: 1.5em;
+    border: solid 2px black;
+}
