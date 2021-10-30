@@ -17,8 +17,10 @@ const loadTrackButton = document.getElementById("loadTrack");
 const midiFileInput = document.getElementById("midiFileInput");
 const loadMidiButton = document.getElementById("loadMidi");
 const midiTrackToLoadInput = document.getElementById("midiTrackToLoad");
+const midiTransposeByInput= document.getElementById("midiTransposeBy");
 const midiTryMatchTimeCheckbox = document.getElementById("midiTryMatchTime");
 const midiAddOutOfRangeCheckbox = document.getElementById("midiAddOutOfRange");
+const midiAutoTransposeCheckbox = document.getElementById("midiAutoTranspose");
 const playOtherTracksCheckbox = document.getElementById("playOtherTracks");
 const detectedMidiTracksElement = document.getElementById("detectedMidiTracks");
 const statusElement = document.getElementById("status-center");
@@ -53,7 +55,13 @@ loadMidiButton.onclick = () => {
             return;
         }
         console.log("Reading midi: " + midi.tracks[trackToLoad].name);
-        let transposition = MidiReader.findBestTransposition(midi, trackToLoad, allowedNotes);
+        let transposition = 0;
+        if (midiAutoTransposeCheckbox.checked) {
+            transposition = MidiReader.findBestTransposition(midi, trackToLoad, allowedNotes);
+            midiTransposeByInput.value = transposition;
+        } else {
+            transposition = parseInt(midiTransposeByInput.value);
+        }
         let result = MidiReader.createTabFromMidi(midi, trackToLoad, allowedNotes, transposition, midiTryMatchTimeCheckbox.checked, midiAddOutOfRangeCheckbox.checked);
         console.log(result);
         bpmInput.value = result.bpm;
