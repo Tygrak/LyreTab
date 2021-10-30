@@ -27,8 +27,18 @@ const statusElement = document.getElementById("status-center");
 
 changeTrackLengthButton.onclick = resizeNoteTrack;
 remakeTrackButton.onclick = makeNoteTrack;
-startPlayingButton.onclick = startPlaying;
-stopPlayingButton.onclick = stopPlaying;
+startPlayingButton.onclick = (e) => {
+    if(e.detail == 0) {
+        return;
+    }
+    startPlaying();
+};
+stopPlayingButton.onclick = (e) => {
+    if(e.detail == 0) {
+        return;
+    }
+    stopPlaying();
+};
 saveTrackButton.onclick = () => {
     let trackString = TabCreator.createTabString(bpm, noteTrack);
     console.log(trackString);
@@ -486,7 +496,7 @@ function keyPressed(event) {
         if (Tone.Transport.state == "started") {
             statusElement.innerText = "Stopped";
             stopPlaying();
-        } else {
+        } else if (Tone.Transport.state != "started") {
             statusElement.innerText = "Playing";
             if (event.shiftKey) {
                 startPlaying();
