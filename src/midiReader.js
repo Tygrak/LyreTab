@@ -62,7 +62,8 @@ function createTabFromMidi(midi, trackNumber, availableNotes, transposition, try
         }
         lastPosition = notes[i].time;
     }
-    return {noteTrack: noteTrack, noteTrackLengths: noteTrackLengths, transposedBy: transposition, missingNotes: missingNotes, bpm: bpm};
+    return {noteTrack: noteTrack, noteTrackLengths: noteTrackLengths, transposedBy: transposition, 
+            missingNotes: missingNotes, bpm: bpm, duration: notes[notes.length-1].time+notes[notes.length-1].duration};
 }
 
 function findNoteDuration(duration, availableDurations) {
@@ -76,6 +77,11 @@ function findNoteDuration(duration, availableDurations) {
         }
     }
     return availableDurations[minId];
+}
+
+function calculateNoteDuration(lengthString, bpm) {
+    let length = parseInt(lengthString.match(/\d+/)[0]);
+    return (240/length)/bpm;
 }
 
 function calculateNoteDurations(bpm) {
@@ -129,4 +135,4 @@ function loadMidiFile(file, callback) {
     });
 }
 
-export {findBestTransposition, createTabFromMidi, findUnusedNotes, loadMidiFile};
+export {findBestTransposition, createTabFromMidi, findUnusedNotes, calculateNoteDuration, loadMidiFile};

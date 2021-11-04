@@ -97,6 +97,8 @@ loadMidiButton.onclick = () => {
         } else {
             resultText += "Missing notes: " + [...new Set(result.missingNotes)];
         }
+        currentTrackLength = result.duration;
+        resultText += "\n Duration: "+Math.round(currentTrackLength)+"s.";
         detectedMidiTracksElement.innerText = resultText;
         console.log(MidiReader.findUnusedNotes(noteTrack, allowedNotes));
         noteTrackLengths = result.noteTrackLengths;
@@ -123,6 +125,10 @@ let allowedNotes = ["G3","A3","B3","C4","D4","E4","F4","G4","A4","B4","C5","D5",
 let noteTrack = [];
 let noteTrackSlots = [];
 let noteTrackLengths = [];
+
+let previousUpdateTime = 0;
+let currentTrackLength = 1;
+let currentTrackTimePosition = 0;
 
 let otherTracks = [];
 
@@ -258,11 +264,37 @@ function hookupLyreButtons() {
     }
 }
 
+function playingUpdate(timestamp) {
+    let delta = (Date.now()-previousUpdateTime)/1000;
+    currentTrackTimePosition += delta;
+    noteTrackElement.scrollLeft = noteTrackElement.scrollWidth*(currentTrackTimePosition/currentTrackLength);
+    previousUpdateTime = Date.now();
+    if (Tone.Transport.state == "started") {
+        window.requestAnimationFrame(playingUpdate);
+    }
+}
+
+function getTimePositionAt(location) {
+    let time = 0;
+    for (let i = 0; i < Math.min(noteTrack.length, location); i++) {
+        if (typeof noteTrackLengths[i] === 'number') {
+            time += noteTrackLengths[i];
+        } else {
+            time += MidiReader.calculateNoteDuration(noteTrackLengths[i], bpm);
+        }
+    }
+    return time;
+}
+
 function startPlaying() {
     startPlayingAt(0);
 }
 
 function startPlayingAt(location) {
+    previousUpdateTime = Date.now();
+    currentTrackLength = getTimePositionAt(noteTrack.length);
+    currentTrackTimePosition = getTimePositionAt(location);
+    window.requestAnimationFrame(playingUpdate);
     if (lastPlayingNoteTrackSlot != null) {
         lastPlayingNoteTrackSlot.classList.remove("noteTrack-playing");
         lastPlayingNoteTrackSlot = null;
