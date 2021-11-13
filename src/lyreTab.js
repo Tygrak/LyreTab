@@ -22,6 +22,7 @@ const midiTryMatchTimeCheckbox = document.getElementById("midiTryMatchTime");
 const midiAddOutOfRangeCheckbox = document.getElementById("midiAddOutOfRange");
 const midiAutoTransposeCheckbox = document.getElementById("midiAutoTranspose");
 const playOtherTracksCheckbox = document.getElementById("playOtherTracks");
+const autoScrollCheckbox = document.getElementById("autoScroll");
 const detectedMidiTracksElement = document.getElementById("detectedMidiTracks");
 const statusElement = document.getElementById("status-center");
 
@@ -40,7 +41,7 @@ stopPlayingButton.onclick = (e) => {
     stopPlaying();
 };
 saveTrackButton.onclick = () => {
-    let trackString = TabCreator.createTabString(bpm, noteTrack);
+    let trackString = TabCreator.createTabString(bpm, noteTrack, noteTrackLengths);
     console.log(trackString);
     TabCreator.createDownload(trackString, "track.ltab");
 };
@@ -50,8 +51,10 @@ loadTrackButton.onclick = () => {
         bpmInput.value = loaded.bpm;
         bpm = loaded.bpm;
         noteTrack = loaded.noteTrack;
+        noteTrackLengths = loaded.noteTrackLenghts;
         trackLengthInput.value = loaded.noteTrack.length;
         resizeNoteTrack();
+        updateNoteTrackLengths();
     });
 };
 loadMidiButton.onclick = () => {
@@ -102,14 +105,7 @@ loadMidiButton.onclick = () => {
         detectedMidiTracksElement.innerText = resultText;
         console.log(MidiReader.findUnusedNotes(noteTrack, allowedNotes));
         noteTrackLengths = result.noteTrackLengths;
-        for (let i = 0; i < result.noteTrack.length; i++) {
-            for (let j = 0; j < noteTrack[i].length; j++) {
-                if (noteTrack[i][j] != "x" && allowedNotes.indexOf(noteTrack[i][j]) == -1) {
-                    noteTrackSlots[i].classList.add("noteTrack-outOfRange");
-                }
-            }
-            setNoteLengthTo(i, result.noteTrackLengths[i]);
-        }
+        updateNoteTrackLengths();
     });
 };
 
@@ -167,6 +163,17 @@ function updateUITrackNotes() {
         }
         noteTrackSlots[i].childNodes[1].innerText = noteText;
         noteTrackSlots[i].title = noteText;
+    }
+}
+
+function updateNoteTrackLengths() {
+    for (let i = 0; i < noteTrack.length; i++) {
+        for (let j = 0; j < noteTrack[i].length; j++) {
+            if (noteTrack[i][j] != "x" && allowedNotes.indexOf(noteTrack[i][j]) == -1) {
+                noteTrackSlots[i].classList.add("noteTrack-outOfRange");
+            }
+        }
+        setNoteLengthTo(i, noteTrackLengths[i]);
     }
 }
 
@@ -267,7 +274,9 @@ function hookupLyreButtons() {
 function playingUpdate(timestamp) {
     let delta = (Date.now()-previousUpdateTime)/1000;
     currentTrackTimePosition += delta;
-    noteTrackElement.scrollLeft = noteTrackElement.scrollWidth*(currentTrackTimePosition/currentTrackLength);
+    if (autoScrollCheckbox.checked) {
+        noteTrackElement.scrollLeft = noteTrackElement.scrollWidth*((currentTrackTimePosition-1)/currentTrackLength);
+    }
     previousUpdateTime = Date.now();
     if (Tone.Transport.state == "started") {
         window.requestAnimationFrame(playingUpdate);
@@ -371,7 +380,10 @@ function setNoteLengthTo(location, length) {
         return;
     }
     let element = noteTrackSlots[location];
-    if (noteTrackLengths[location] == "16n") {
+    element.classList.remove("noteTrack-8th");
+    if (length == "32n") {
+        element.classList.remove("noteTrack-32th");
+    } else if (noteTrackLengths[location] == "16n") {
         element.classList.remove("noteTrack-16th");
     } else if (noteTrackLengths[location] == "8n") {
         element.classList.remove("noteTrack-8th");
@@ -386,7 +398,9 @@ function setNoteLengthTo(location, length) {
     } else { 
         element.style.minWidth = "";
     }
-    if (length == "16n") {
+    if (length == "32n") {
+        element.classList.add("noteTrack-32th");
+    } else if (length == "16n") {
         element.classList.add("noteTrack-16th");
     } else if (length == "8n") {
         element.classList.add("noteTrack-8th");

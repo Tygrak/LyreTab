@@ -93,6 +93,7 @@ function calculateNoteDurations(bpm) {
     //result.push({note: "6n", duration: 40/bpm});
     result.push({note: "8n", duration: 30/bpm});
     result.push({note: "16n", duration: 15/bpm});
+    result.push({note: "32n", duration: 7.5/bpm});
     return result;
 }
 

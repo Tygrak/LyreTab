@@ -47,6 +47,11 @@ body {
     text-align: center;
 }
 
+.noteTrack-32th {
+    min-width: 0.5rem;
+    font-size: smaller;
+}
+
 .noteTrack-16th {
     min-width: 1rem;
     font-size: smaller;

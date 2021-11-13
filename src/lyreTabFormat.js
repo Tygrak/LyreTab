@@ -1,7 +1,7 @@
-function createTabString(bpm, noteTrack, width=24) {
+function createTabString(bpm, noteTrack, noteTrackLenghts, width=24) {
     let resultString = "";
     resultString += "bpm:" + bpm + "\n";
-    let split = splitArrayIntoChunks(noteTrack, width);
+    let split = splitArrayIntoChunks(noteTrack, noteTrackLenghts, width);
     for (let chunkI = 0; chunkI < split.length; chunkI++) {
         let maxHeight = 0;
         for (let i = 0; i < noteTrack.length; i++) {
@@ -13,7 +13,7 @@ function createTabString(bpm, noteTrack, width=24) {
         for (let line = 0; line < maxHeight; line++) {
             for (let i = 0; i < chunk.length; i++) {
                 if (chunk[i].length <= line) {
-                    resultString += "  ";
+                    resultString += " ".repeat(chunk[i][0].length);
                 } else {
                     resultString += chunk[i][line];
                 }
@@ -44,6 +44,7 @@ function loadTabString(tabString) {
     let lines = tabString.split("\n");
     let match = lines[0].match(/bpm: *(\d+)/);
     let noteTrack = [];
+    let noteTrackLenghts = [];
     let currentPos = 0;
     for (let line = 1; line < lines.length; line++) {
         if (lines[line] == "") {
@@ -60,18 +61,22 @@ function loadTabString(tabString) {
                 if (split[j] == "") {
                     continue;
                 }
-                if (j+currentPos >= noteTrack.length) {
-                    noteTrack.push([]);
-                }
-                if (split[j] != "  ") {
-                    noteTrack[j+currentPos].push(split[j]);
+                if (height == 1) {
+                    noteTrackLenghts.push(split[j].trim()+"n");
+                } else {
+                    if (j+currentPos >= noteTrack.length) {
+                        noteTrack.push([]);
+                    }
+                    if (split[j].trim() != "") {
+                        noteTrack[j+currentPos].push(split[j]);
+                    }
                 }
             }
         }
         currentPos = noteTrack.length;
         line += height;
     }
-    return {bpm: match[1], noteTrack: noteTrack};
+    return {bpm: match[1], noteTrack: noteTrack, noteTrackLenghts: noteTrackLenghts};
 }
 
 function createDownload(data, filename) {
@@ -92,12 +97,41 @@ function createDownload(data, filename) {
     }
 }
 
-function splitArrayIntoChunks(array, chunkSize) {
+function padToMaxLengthInArray(array) {
+    let max = -1;
+    for (let i = 0; i < array.length; i++) {
+        max = Math.max(array[i].length, max);
+    }
+    for (let i = 0; i < array.length; i++) {
+        for (let j = array[i].length; j < max; j++) {
+            array[i] += " ";
+        }
+    }
+}
+
+function splitArrayIntoChunks(notes, noteLengths, chunkSize) {
     let result = [];
     let current = [];
     let n = 0;
-    for (let i = 0; i < array.length; i++) {
-        current.push(array[i]);
+    for (let i = 0; i < notes.length; i++) {
+        let note = notes[i];
+        if (noteLengths[i] == "8n") {
+            note.unshift("8");
+        } else if (noteLengths[i] == "16n") {
+            note.unshift("16");
+        } else if (noteLengths[i] == "32n") {
+            note.unshift("32");
+        } else if (noteLengths[i] == "4n") {
+            note.unshift("4");
+        } else if (noteLengths[i] == "3n") {
+            note.unshift("3");
+        } else if (noteLengths[i] == "2n") {
+            note.unshift("2");
+        } else if (noteLengths[i] == "1n") {
+            note.unshift("1");
+        }
+        padToMaxLengthInArray(note);
+        current.push(note);
         n++;
         if (n >= chunkSize) {
             result.push(current);
