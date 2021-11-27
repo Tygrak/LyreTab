@@ -13,7 +13,11 @@ function createTabString(bpm, noteTrack, noteTrackLenghts, width=24) {
         for (let line = 0; line < maxHeight; line++) {
             for (let i = 0; i < chunk.length; i++) {
                 if (chunk[i].length <= line) {
-                    resultString += " ".repeat(chunk[i][0].length);
+                    if (chunk[i].length == 0) {
+                        resultString += "  ";
+                    } else {
+                        resultString += " ".repeat(chunk[i][0].length);
+                    }
                 } else {
                     resultString += chunk[i][line];
                 }
