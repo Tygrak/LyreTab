@@ -8,6 +8,7 @@ const lyreDivElement = document.getElementById("lyre-instrument");
 const startPlayingButton = document.getElementById("startPlaying");
 const stopPlayingButton = document.getElementById("stopPlaying");
 const bpmInput = document.getElementById("bpm");
+const volumeInput = document.getElementById("volume");
 const trackLengthInput = document.getElementById("trackLength");
 const changeTrackLengthButton = document.getElementById("changeTrackLength");
 const remakeTrackButton = document.getElementById("remakeTrack");
@@ -26,9 +27,15 @@ const autoScrollCheckbox = document.getElementById("autoScroll");
 const detectedMidiTracksElement = document.getElementById("detectedMidiTracks");
 const statusElement = document.getElementById("status-center");
 
+let initialized = false;
+
 changeTrackLengthButton.onclick = resizeNoteTrack;
 remakeTrackButton.onclick = makeNoteTrack;
-startPlayingButton.onclick = (e) => {
+startPlayingButton.onclick = async (e) => {
+    if (!initialized) {
+        await Tone.start();
+        initialized = true;
+    }
     if(e.detail == 0) {
         return;
     }
@@ -300,6 +307,7 @@ function startPlaying() {
 }
 
 function startPlayingAt(location) {
+    Tone.Master.volume.value = parseFloat(volumeInput.value);
     previousUpdateTime = Date.now();
     currentTrackLength = getTimePositionAt(noteTrack.length);
     currentTrackTimePosition = getTimePositionAt(location);
@@ -418,7 +426,7 @@ function setNoteLengthTo(location, length) {
     noteTrackLengths[location] = length;
 }
 
-function keyPressed(event) {
+async function keyPressed(event) {
     console.log(event);
     if (event.key == "ArrowLeft") {
         if (event.shiftKey) {
@@ -539,6 +547,10 @@ function keyPressed(event) {
         }
         updateUITrackNotes();
     } else if (event.key == " ") {
+        if (!initialized) {
+            await Tone.start();
+            initialized = true;
+        }
         if (Tone.Transport.state == "started") {
             statusElement.innerText = "Stopped";
             stopPlaying();
